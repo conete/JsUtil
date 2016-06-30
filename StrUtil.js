@@ -7,11 +7,6 @@
  * @source https://github.com/conete/JsUtil
  */
 
-
-function ReplaceAll(str, find, replace) { //might malfunction for ReplaceAll(str, " ", "")
-  return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
-}
-
 function AfterFirstToken(sir, c) {
 	if (sir === "" || sir.indexOf(c) < 0)
 		return sir;
@@ -83,14 +78,40 @@ function ifStartsWithGetAfter(line, setStart,  setAfter) {
 	return line;
 }
 
+function isOrdered(arrayInt){
+	if (arrayInt.length < 2)
+		return true;
+	for (i = 1; i < arrayInt.length; i++) 
+		if (arrayInt[i]<arrayInt[i-1])
+			return false;
+	return true;
+}
+function isStrictOrdered(arrayInt){
+	if (arrayInt.length < 2)
+		return true;
+	for (i = 1; i < arrayInt.length; i++) 
+		if (arrayInt[i]<=arrayInt[i-1])
+			return false;
+	return true;
+}
+
 function GetBetweenChars( sir,  fch,  lch) {
-	return GetFirstToken(AfterFirstToken(sir, fch), lch);
+	if( isStrictOrdered([-1,sir.indexOf(fch),sir.indexOf(lch)]))
+		return GetFirstToken(AfterFirstToken(sir, fch), lch);
+	else
+		return "";
 }
 function GetOutsideChars( sir,  fch,  lch) {		
-	return GetFirstToken(sir, fch)+AfterFirstToken(sir, lch);
+	if( isStrictOrdered([-1,sir.indexOf(fch),sir.indexOf(lch)])	)
+		return GetFirstToken(sir, fch)+AfterFirstToken(sir, lch);
+	else
+		return "";
 }	
 function GetBetweenAndChars( sir,  fch,  lch) {
-	return fch+GetFirstToken(AfterFirstToken(sir, fch), lch)+lch;
+	//if( isStrictOrdered([-1,sir.indexOf(fch),sir.indexOf(lch)])	//condition will fail if fch = lch, isOrdered will fail for indexOf(fch) = -1
+		return fch+GetFirstToken(AfterFirstToken(sir, fch), lch)+lch;
+	//else
+	//	return "";
 }
 function GetOutsideAndChars( sir,  fch,  lch) {		
 	return GetFirstToken(sir, fch)+fch+lch+AfterFirstToken(sir, lch);
@@ -149,7 +170,7 @@ function RemoveTokenChars( sir,  tk) {
 
 function RemoveBetweenTokens( line,  tkStart,  tkEnd) {
 	var temp;
-	if (line.indexOf(tkStart)!= -1 && line.indexOf(tkEnd)!= -1){
+	if (line.indexOf(tkStart)!= -1 && line.indexOf(tkEnd)!= -1 && line.indexOf(tkStart)<line.indexOf(tkEnd)){
 		temp = GetFirstToken(line, tkStart) ;
 		line = AfterFirstToken(line, tkStart);
 		line = AfterFirstToken(line, tkEnd);
@@ -164,6 +185,12 @@ function RemoveAllBetweenTokens( line,  tkStart,  tkEnd) {
 	return line;
 }
 
+function escapeRegExp(str) {
+    return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+}
+function ReplaceAll(str, find, replaceStr) { //might malfunction for ReplaceAll(str, " ", "")
+  return str.replace(new RegExp(escapeRegExp(find), 'g'), replaceStr);
+}
 
 function RemoveAllSet( line,  setvar) {
 	for (var i = 0; i<setvar.length;i++){
@@ -268,56 +295,51 @@ function genSpacedStr( s,  len) {
 
 
 function testFct(){
-
-	alert("ReplaceAll \n hello how re you, my nme is cristin:\n " + ReplaceAll("hello how are you, my name is cristian", "a", ""));
-	alert("ReplaceAll \n hello how are you, my name is john:\n " + ReplaceAll("hello how are you, my name is cristian", "cristian", "john"));
-	alert("AfterFirstToken \n my name is cristian:\n " + AfterFirstToken("hello how are you, my name is cristian", "you,"));
-	alert("GetFirstToken \n hello how are :\n " + GetFirstToken("hello how are you, my name is cristian", "you,"));
-	alert("AfterLastToken \n an :\n " + AfterLastToken("hello how are you, my name is cristian", "i"));
-	alert("BeforeLastToken \n hello how are you, my name is crist :\n " + BeforeLastToken("hello how are you, my name is cristian", "i"));
-	alert("BeforeAnyOfTokens \n hell :\n " + BeforeAnyOfTokens("hello how are you, my name is cristian", ["o","a","c"]));
-	alert("startsWith \n true :\n " + startsWith("hello how are you, my name is cristian", ["hello","how","my"]));
-	alert("startsWith \n false :\n " + startsWith("hello how are you, my name is cristian", ["how","my"]));
-	alert("ifStartsWithGetAfter \n name is cristian :\n " + ifStartsWithGetAfter("hello how are you, my name is cristian", ["hello how"],["my"]));
-	alert("GetBetweenChars \n are you, :\n " + GetBetweenChars("hello how are you, my name is cristian", "how","my"));
-	alert("GetOutsideChars \n hello  name is cristian :\n " + GetOutsideChars("hello how are you, my name is cristian", "how","my"));
-	alert("GetBetweenAndChars \n how are you, my:\n " + GetBetweenAndChars("hello how are you, my name is cristian", "how","my"));
-	alert("GetOutsideAndChars \n hello howmy name is cristian :\n " + GetOutsideAndChars("hello how are you, my name is cristian", "how","my"));
-	alert("GetBeforeNoTokens \n hello how are y :\n " + GetBeforeNoTokens("hello how are you, my name is cristian", "o",3));
-	alert("AfterFirstNoTokens \n u, my name is cristian :\n " + AfterFirstNoTokens("hello how are you, my name is cristian", "o",3));
-	alert("countTokens \n 3 :\n " + countTokens("hello how are you, my name is cristian", "o"));
-	alert("RemoveTokenChars \n hell hw are yu, my name is cristian :\n " + RemoveTokenChars("hello how are you, my name is cristian", "o"));
-	alert("RemoveBetweenTokens \n hello  name is cristian :\n " + RemoveBetweenTokens("hello how are you, my name is cristian", "how","my"));
-	alert("RemoveAllBetweenTokens \n hello how :\n " + RemoveAllBetweenTokens("hello how are you, my name is cristian", "a","n"));
-	alert("RemoveAllSet \n hell hw are yu, my name s crstan :\n " + RemoveAllSet("hello how are you, my name is cristian", ["o","i"]));
-	alert("RemoveEnding \n hello how are you, my name is cris :\n " + RemoveEnding("hello how are you, my name is cristian", "tian"));
-	alert("RemoveBegining \n  how are you, my name is cristian :\n " + RemoveBegining("hello how are you, my name is cristian", "hello"));
-	alert("ReplaceAllSet \n  hellY hYw are yYu, my name Ys crYstYan :\n " + ReplaceAllSet("hello how are you, my name is cristian", ["o","i"], "Y"));
-	alert("countMatches \n  3 :\n " + countMatches("hello how are you, my name is cristian", "o"));
+	testStr = "hello how are you, my name is cristian";
+	alert("ReplaceAll \n hello how re you, my nme is cristin:\n " + ReplaceAll(testStr, "a", ""));
+	alert("ReplaceAll \n hello how are you, my name is john:\n " + ReplaceAll(testStr, "cristian", "john"));
+	alert("AfterFirstToken \n my name is cristian:\n " + AfterFirstToken(testStr, "you,"));
+	alert("GetFirstToken \n hello how are :\n " + GetFirstToken(testStr, "you,"));
+	alert("AfterLastToken \n an :\n " + AfterLastToken(testStr, "i"));
+	alert("BeforeLastToken \n hello how are you, my name is crist :\n " + BeforeLastToken(testStr, "i"));
+	alert("BeforeAnyOfTokens \n hell :\n " + BeforeAnyOfTokens(testStr, ["o","a","c"]));
+	alert("startsWith \n true :\n " + startsWith(testStr, ["hello","how","my"]));
+	alert("startsWith \n false :\n " + startsWith(testStr, ["how","my"]));
+	alert("ifStartsWithGetAfter \n name is cristian :\n " + ifStartsWithGetAfter(testStr, ["hello how"],["my"]));
+	alert("GetBetweenChars \n are you, :\n " + GetBetweenChars(testStr, "how","my"));
+	alert("GetOutsideChars \n hello  name is cristian :\n " + GetOutsideChars(testStr, "how","my"));
+	alert("GetBetweenAndChars \n how are you, my:\n " + GetBetweenAndChars(testStr, "how","my"));
+	alert("GetOutsideAndChars \n hello howmy name is cristian :\n " + GetOutsideAndChars(testStr, "how","my"));
+	alert("GetBeforeNoTokens \n hello how are y :\n " + GetBeforeNoTokens(testStr, "o",3));
+	alert("AfterFirstNoTokens \n u, my name is cristian :\n " + AfterFirstNoTokens(testStr, "o",3));
+	alert("countTokens \n 3 :\n " + countTokens(testStr, "o"));
+	alert("RemoveTokenChars \n hell hw are yu, my name is cristian :\n " + RemoveTokenChars(testStr, "o"));
+	alert("RemoveBetweenTokens \n hello  name is cristian :\n " + RemoveBetweenTokens(testStr, "how","my"));
+	alert("RemoveAllBetweenTokens \n hello how :\n " + RemoveAllBetweenTokens(testStr, "a","n"));
+	alert("RemoveAllSet \n hell hw are yu, my name s crstan :\n " + RemoveAllSet(testStr, ["o","i"]));
+	alert("RemoveEnding \n hello how are you, my name is cris :\n " + RemoveEnding(testStr, "tian"));
+	alert("RemoveBegining \n  how are you, my name is cristian :\n " + RemoveBegining(testStr, "hello"));
+	alert("ReplaceAllSet \n  hellY hYw are yYu, my name Ys crYstYan :\n " + ReplaceAllSet(testStr, ["o","i"], "Y"));
+	alert("countMatches \n  3 :\n " + countMatches(testStr, "o"));
 	alert("toProperCase \n Hello how are you :\n " + toProperCase("hello how are you"));
 	alert("toCamelCase \n HelloHowAreYou_ :\n " + toCamelCase("hello how are you", " "));
 	alert("toUCamelCase \n Hello How Are You :\n " + toUCamelCase("hello how are you", " "));
 	alert("toNameCase \n Hello How Are You :\n " + toNameCase("hello how are you", " "));
-	alert("genSpacedStr \n hello how      :\n " + genSpacedStr("hello how", 15) + "]");
-	
+	alert("genSpacedStr \n hello how      :\n " + genSpacedStr("hello how", 15) + "]");	
 	alert(GetAllBetweenChars("outPorts>g:nth-child(1)>.port-body", "(",")"));
 }
 
 
-function urlEscapedStr( str) {
+function urlEscapedStr(str) {
 	// space %20 replaced with +
 	var askSet = [["%", "%25"], ["\\|", "%7C"], ["\\^", "%5E"], [" ", "%20"], ["#", "%23"], 
 			["\\$", "%24"],	["`", "%60"], [":", "%3A"], ["<", "%3C"], [">", "%3E"], ["\\[", "%5B"], 
-			["\\]", "%5D"], ["\\[", "%7B"], ["\\]", "%7D"], ["“", "%22"], ["\\+", "%2B"], 
+			["\\]", "%5D"], ["\\[", "%7B"], ["\\]", "%7D"], ["â€œ", "%22"], ["\\+", "%2B"], 
 			["&", "%26"], ["@", "%40"], ["/", "%2F"], [";", "%3B"], ["=", "%3D"], ["\\?", "%3F"],
-			["~", "%7E"], ["‘", "%27"], [",", "%2C"], ["\\\\", "%5C"]];			
+			["~", "%7E"], ["â€˜", "%27"], [",", "%2C"], ["\\\\", "%5C"]];			
 	for (var i=0;i<askSet.length;i++)
 		str = ReplaceAll(str, askSet[i][0], askSet[i][1]);
 	return str;
-}
-
-function escapeRegExp(str) {
-    return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
 }
 
 
@@ -338,7 +360,7 @@ function toSnakeCase( s){
    
 }
 
-function inArray(haystack, needle) {
+function inArray(haystack, needle) {  //indexOf() for IE<9
     var length = haystack.length;
     for(var i = 0; i < length; i++) {
         if(haystack[i] == needle)
@@ -354,6 +376,36 @@ function GetAllBetweenChars( sir,  fch,  lch) {
 		sir = AfterFirstToken(sir, lch);
 	}
 	return retVals;
+}
+
+
+function GetAllBetweenAndChars( sir,  fch,  lch) {
+	var retVals = [];
+	var temp;
+	while(isStrictOrdered([-1,sir.indexOf(fch),sir.indexOf(lch)])){
+		temp = GetBetweenAndChars( sir,  fch,  lch)
+		retVals.push(temp);		
+		sir = sir.replace(temp, "");
+	}
+	return retVals;
+}
+
+function ReplaceAllBetweenChars( sir,  fch,  lch, lookFor, replaceWith) {
+	var retVals = GetAllBetweenAndChars( sir,  fch,  lch);
+	for (i = 0; i < retVals.length; i++)
+		sir = sir.replace(retVals[i], retVals[i].replace(lookFor, replaceWith));
+	return sir;
+}
+
+function ReplaceBetweenTokens( line,  tkStart,  tkEnd, lookFor, replaceWith) {
+	var temp;
+	if (line.indexOf(tkStart)!= -1 && line.indexOf(tkEnd)!= -1 && line.indexOf(tkStart)<line.indexOf(tkEnd)){
+		temp = GetFirstToken(line, tkStart) ;
+		line = AfterFirstToken(line, tkStart);
+		line = AfterFirstToken(line, tkEnd);
+		line = temp + " "+ line;
+	}
+	return line;
 }
 
 function stringToNumArray(str){
